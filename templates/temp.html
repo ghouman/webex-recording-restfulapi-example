@@ -4,6 +4,18 @@
     <title>App Permissions Request</title>
     <meta charset='utf-8'>
     <link rel='stylesheet' type='text/css' href='/static/css/index.css'>
+      <script type="application/javascript">
+          function goOauthUrl(){
+              var oAuthUrl = document.getElementById("OAuthUrl").value;
+
+              if(oAuthUrl == null || oAuthUrl == "" ) {
+                  alert("please input Your OAuth Authorization URL, " +
+                      "e.g: https://webexapis.com/v1/authorize?client_id=xxxx&response_type=code&redirect_uri=http%3A%2F%2F127.0.0.1%3A10060%2Foauth&scope=meeting%3Arecordings_read%20spark-compliance%3Ameetings_write%20spark%3Aall%20spark%3Akms%20meeting%3Aadmin_recordings_write%20spark%3Acalls_read%20meeting%3Arecordings_write%20meeting%3Aadmin_recordings_read%20spark-compliance%3Ameetings_read%20spark%3Aorganizations_read&state=set_state_here");
+              } else {
+                  window.location.href = oAuthUrl;
+              }
+          }
+      </script>
   </head>
   <body>
     <section class='container'>
@@ -13,4 +25,10 @@
         <div class='spacer'></div>
         {% block content %}{% endblock %}
   </body>
+
 </html>
+
+{#
+https://idbrokerbts.webex.com/idb/oauth2/v1/authorize?response_type=code&client_id=C339714cca1e35dae56ab8e5182e9990421192d65b9b7c8b598b8b1113db1dc1b&redirect_uri=http%3A%2F%2F127.0.0.1%3A10060%2Foauth&response_type=code&client_id=C339714cca1e35dae56ab8e5182e9990421192d65b9b7c8b598b8b1113db1dc1b&redirect_uri=https%3A%2F%2Fsq1mrs-ta.wbxlab.net%2Fwbxrestfulapi%2Fapi%2Fv1%2Fauthorize&scope=meeting%3Aschedules_read%20meeting%3Aschedules_write%20meeting%3Arecordings_read%20meeting%3Arecordings_write%20meeting%3Apreferences_read%20meeting%3Apreferences_write%20meeting%3Atranscripts_read%20meeting%3Atranscripts_write%20spark%3Amemberships_read%20spark%3Amemberships_write%20meeting%3Aparticipants_read&state=200
+#}
+
