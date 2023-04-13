@@ -3,11 +3,12 @@
 
 {% block content %}
       <h1>GRANT INTEGRATION ACCESS</h1>
+     <input type="hidden" id="OAuthUrl"style="width: 100%" value="{{ oauthUrl }}">
+
+    {#    Client Secret: <input type="text" id="Secret"style="width: 100%">#}
+
       <!-- STEP 1 : Button that kicks off the flow by sending your user to the following URL along with a standard set of OAuth query parameters, state parameter is hard coded here-->
       <!-- The scope parameter in the integration is set to spark:all for simplicity in this example, in production this should be fine tuned -->
-    OAuth Authorization URL: <input type="text" id="OAuthUrl"style="width: 100%">
-
-{#    Client Secret: <input type="text" id="Secret"style="width: 100%">#}
-      <div class='center' style="margin-top: 30px"><a  onclick="goOauthUrl()"><div class='button' style='width:512px;'>GRANT</div></a></div>
+      <div class='center' style="margin-top: 30px"><a  onclick="goOauthUrl()"><div class='button'>GRANT</div></a></div>
 {% endblock %}
 

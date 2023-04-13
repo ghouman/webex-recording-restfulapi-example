@@ -2,8 +2,19 @@
 
 {% block content %}
     <h1>CLICK BUTTON TO GET LIST OF ROOMS</h1>
-    <div class='center'><a href="{{ url_for('spaces')}}"><div class='button' style='width:512px;'>SPACES</div></a></div>
+    <div class='center'><a href="{{ url_for('spaces')}}"><div class='button'>SPACES</div></a></div>
 
     <h1>CLICK BUTTON TO GET LIST OF RECODINGS</h1>
-    <div class='center'><a href="{{ url_for('recordings')}}"><div class='button' style='width:512px;'>RECORDINGS</div></a></div>
+
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date">
+
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date">
+
+        <div  class='button' id="recordings_btn" onclick="showRecrdings('recordings')">List Recordings</div>
+
+        <div  class='button' id="adminRecordings_btn" onclick="showRecrdings('admin/recordings')">List Recordings For an Admin or Compliance Officer</div>
+    <div style="color: red;font-size: 10px">{{ errormsg }}</div>
+{#    <div class='center'><a href="{{ url_for('recordings',start_date='2023-03-20',end_date='2023-04-10')}}"><div class='button' style='width:512px;'>RECORDINGS</div></a></div>#}
 {% endblock %}

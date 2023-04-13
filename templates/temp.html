@@ -15,6 +15,37 @@
                   window.location.href = oAuthUrl;
               }
           }
+
+          function downloadAll(){
+              let directDownload_td = document.getElementsByName("directDownload_td");
+              directDownload_td.forEach(function (obj){
+                  let downloadUrl = obj.innerText;
+                  if(downloadUrl!=null){
+                      downloadFile (obj.id,downloadUrl);
+                  }
+              })
+          }
+
+          function downloadFile (id,downloadUrl) {
+              let iframeID = "iframe_"+id;
+              let iframe_old = document.getElementById(iframeID);
+              if (iframe_old) {
+                  document.body.removeChild(iframe_old);
+              }
+              let iframe_New = document.createElement('iframe');
+              iframe_New.style.display = 'none';
+              iframe_New.id = iframeID;
+              iframe_New.src = downloadUrl;
+              document.body.appendChild(iframe_New);
+          }
+
+          function showRecrdings(apiUrl){
+              // 从输入框中获取值
+              var start_date = document.getElementById("start_date").value;
+              var end_date = document.getElementById("end_date").value;
+              window.open("{{ url_for('recordings') }}?start_date="+ start_date +"&end_date="+end_date+"&apiUrl="+apiUrl) ;
+          }
+
       </script>
   </head>
   <body>

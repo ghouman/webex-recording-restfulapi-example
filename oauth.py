@@ -8,23 +8,30 @@
 
 # -*- coding:utf-8 -*-
 from webbrowser import get
+from dotenv import load_dotenv
 import requests
 import json
 import os
+import urllib.request
 
 
 from flask import Flask, render_template, request, session
+
+load_dotenv()
 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-clientID = "Ccf1dfeb0546e60b7220c16109d653428d1eb059294c95d4adc020e5d8dccc3ff"
-secretID = "xxxxxxxx"
-redirectURI = "http://127.0.0.1:10060/oauth" #This could be different if you publicly expose this endpoint.
+clientID = os.getenv("APP_CLIENTID")
+secretID = os.getenv("APP_SECRETID")
 
+redirectURI = os.getenv("REDIRECT_URI")  # This could be different if you publicly expose this endpoint.
 
+baseApiUrl = "https://webexapis.com/v1/"
+
+errormsg = ""
 """
 Function Name : get_tokens
 Description : This is a utility function that takes in the 
@@ -37,15 +44,17 @@ Description : This is a utility function that takes in the
               in a Session. This app will request a new token each time
               it runs which will not be able to check against expired tokens. 
 """
+
+
 def get_tokens(code):
     print("function : get_tokens()")
     print("code:", code)
-    #STEP 3 : use code in response from webex api to collect the code parameter
-    #to obtain an access token or refresh token
+    # STEP 3 : use code in response from webex api to collect the code parameter
+    # to obtain an access token or refresh token
     url = "https://webexapis.com/v1/access_token"
-    headers = {'accept':'application/json','content-type':'application/x-www-form-urlencoded'}
+    headers = {'accept': 'application/json', 'content-type': 'application/x-www-form-urlencoded'}
     payload = ("grant_type=authorization_code&client_id={0}&client_secret={1}&"
-                    "code={2}&redirect_uri={3}").format(clientID, secretID, code, redirectURI)
+               "code={2}&redirect_uri={3}").format(clientID, secretID, code, redirectURI)
     req = requests.post(url=url, data=payload, headers=headers)
     results = json.loads(req.text)
     print(results)
@@ -59,6 +68,7 @@ def get_tokens(code):
     print("Refresh Token stored in session : ", session['refresh_token'])
     return
 
+
 """
 Function Name : get_tokens_refresh()
 Description : This is a utility function that leverages the refresh token
@@ -69,13 +79,15 @@ Description : This is a utility function that leverages the refresh token
               in a Session. This app will request a new token each time
               it runs which will not be able to check against expired tokens. 
 """
+
+
 def get_tokens_refresh():
     print("function : get_token_refresh()")
 
     url = "https://webexapis.com/v1/access_token"
-    headers = {'accept':'application/json','content-type':'application/x-www-form-urlencoded'}
+    headers = {'accept': 'application/json', 'content-type': 'application/x-www-form-urlencoded'}
     payload = ("grant_type=refresh_token&client_id={0}&client_secret={1}&"
-                    "refresh_token={2}").format(clientID, secretID, session['refresh_token'])
+               "refresh_token={2}").format(clientID, secretID, session['refresh_token'])
     req = requests.post(url=url, data=payload, headers=headers)
     results = json.loads(req.text)
 
@@ -89,6 +101,7 @@ def get_tokens_refresh():
     print("Refresh Token stored in session : ", session['refresh_token'])
     return
 
+
 """
 Function Name : main_page
 Description : when using the browser to access server at
@@ -98,11 +111,13 @@ Description : when using the browser to access server at
               of the Oauth process with the click of the 
               grant button
 """
-@app.route("/")
 
+
+@app.route("/")
 def main_page():
+    oauth_url = os.getenv("OAUTH_URL")
     """Main Grant page"""
-    return render_template("index.html")
+    return render_template('index.html', oauthUrl=oauth_url)
 
 """
 Function Name : oauth
@@ -115,22 +130,24 @@ Description : After the grant button is click from index.html
               code and calls get_tokens() for further API calls against
               the Webex API endpoints. 
 """
-@app.route("/oauth") #Endpoint acting as Redirect URI.
 
+
+@app.route("/oauth")  # Endpoint acting as Redirect URI.
 def oauth():
     print("function : oauth()")
     """Retrieves oauth code to generate tokens for users"""
     state = request.args.get("state")
     print('state : ' + state)
     if state == 'set_state_here':
-        code = request.args.get("code") # STEP 2 : Capture value of the
-                                        # authorization code.
+        code = request.args.get("code")  # STEP 2 : Capture value of the
+        # authorization code.
         print("OAuth code:", code)
         print("OAuth state:", state)
         get_tokens(code)
         return render_template("granted.html")
     else:
         return render_template("index.html")
+
 
 """
 Funcion Name : spaces
@@ -140,38 +157,49 @@ Description : Now that we have our authentication code the spaces button
               Authentication Token is accessed via Session Key 'oauth_token'
               and used to construct the api call in authenticated mode. 
 """
-@app.route("/spaces",methods=['GET'])
-def  spaces():
+
+
+@app.route("/spaces", methods=['GET'])
+def spaces():
     print("function : spaces()")
     print("accessing token ...")
     url = "https://webexapis.com/v1/rooms"
     response = api_call(url)
 
     print("status code : ", response.status_code)
-    #Do a check on the response. If the access_token is invalid then use refresh
+    # Do a check on the response. If the access_token is invalid then use refresh
     # tokent to ontain a new set of access token and refresh token.
-    if (response.status_code == 401) :
+    if (response.status_code == 401):
         get_tokens_refresh()
         response = api_call(url)
 
     r = response.json()['items']
     print("response status code : ", response.status_code)
     spaces = []
-    for i in range(len(r)) :
+    for i in range(len(r)):
         spaces.append(r[i]['title'])
 
-    return render_template("spaces.html", spaces = spaces)
+    return render_template("spaces.html", spaces=spaces)
 
 
-@app.route("/recordings",methods=['GET'])
-def  recordings():
+@app.route("/recordings", methods=['GET'])
+def recordings():
     print("function : recordings()")
-    print("accessing token ...")
-    url = "https://webexapis.com/v1/recordings?siteUrl=alpha.webex.com&max=5&from=2023-03-20&to=2023-04-10"
-    response = api_call(url)
 
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    api_url = request.args.get("apiUrl")
+
+    print("start_date." + start_date)
+    print("end_date." + end_date)
+
+    max_num = os.getenv("RECORDING_NUM")
+    # api document: https://developer.webex.com/docs/api/v1/recordings, v1/admin/recordings api need admin or compliance officer role
+    url = baseApiUrl + api_url + "?max=" + max_num + "&from=" + start_date + "&to=" + end_date
+    response = api_call(url)
+    recordings = []
     print("status code : ", response.status_code)
-    #Do a check on the response. If the access_token is invalid then use refresh
+    # Do a check on the response. If the access_token is invalid then use refresh
     # tokent to ontain a new set of access token and refresh token.
     if response.status_code == 401:
         get_tokens_refresh()
@@ -179,22 +207,30 @@ def  recordings():
 
     if response.status_code == 403:
         print("403 forbidden to request")
-        return
+        errormsg = "403 forbidden to request:your account not have privilege to request this api"
+        return render_template("granted.html", errormsg=errormsg)
+    if 'errors' in response.json():
+        errormsg = response.json()['errors'][0]["description"]
+        print(errormsg)
+        return render_template("granted.html", errormsg=errormsg)
     print("response status code : ", response.status_code)
+
     r = response.json()['items']
-    recordings = []
-    for i in range(len(r)) :
+    for i in range(len(r)):
         getRecordingDetailsUrl = "https://webexapis.com/v1/recordings/" + r[i]['id']
         responseDetail = api_call(getRecordingDetailsUrl)
         if responseDetail.status_code == 200:
-            recordings.append(responseDetail.json())
+            recordingDetail = responseDetail.json()
+            recordings.append(recordingDetail)
 
-    return render_template("recordings.html", recordings = recordings)
+    return render_template("recordings.html", recordings=recordings)
 
-def api_call(url) :
+
+def api_call(url):
     accessToken = session['oauth_token']
 
-    headers = {'accept':'application/json','Content-Type':'application/json','Authorization': 'Bearer ' + accessToken}
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + accessToken}
     response = requests.get(url=url, headers=headers)
     return response
 
