@@ -26,6 +26,8 @@ app.secret_key = os.urandom(24)
 
 clientID = os.getenv("APP_CLIENTID")
 secretID = os.getenv("APP_SECRETID")
+isDownload = os.getenv("IS_DOWNLOAD_BY_CODE")
+localDownloadPath = os.getenv("LOCAL_DOWNLOAD_PATH")
 
 redirectURI = os.getenv("REDIRECT_URI")  # This could be different if you publicly expose this endpoint.
 
@@ -118,6 +120,7 @@ def main_page():
     oauth_url = os.getenv("OAUTH_URL")
     """Main Grant page"""
     return render_template('index.html', oauthUrl=oauth_url)
+
 
 """
 Function Name : oauth
@@ -222,8 +225,20 @@ def recordings():
         if responseDetail.status_code == 200:
             recordingDetail = responseDetail.json()
             recordings.append(recordingDetail)
+            if (isDownload == 'true') & ('temporaryDirectDownloadLinks' in recordingDetail.keys()):
+                url = recordingDetail['temporaryDirectDownloadLinks']['recordingDownloadLink']
+                filename: str = localDownloadPath + recordingDetail['topic'] + '.' + recordingDetail['format']
+                urllib.request.urlretrieve(url, filename, lambda blocknum, blocksize, totalsize: callbackfunc(blocknum, blocksize, totalsize, filename))
 
     return render_template("recordings.html", recordings=recordings)
+
+
+def callbackfunc(blocknum, blocksize, totalsize, filename):
+    downloaded = blocknum * blocksize
+    percent = downloaded / totalsize * 100
+    print(f"Downloaded {filename}: {downloaded} bytes / {totalsize} bytes ({percent:.2f}%)")
+    if downloaded == totalsize:
+        print(f"Download of {filename} completed.")
 
 
 def api_call(url):
