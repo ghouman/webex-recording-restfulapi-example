@@ -234,10 +234,11 @@ def recordings():
 
 
 def callbackfunc(blocknum, blocksize, totalsize, filename):
-    downloaded = blocknum * blocksize
+    downloaded = round(blocknum * blocksize / 1024, 0)
+    totalsize = round(totalsize / 1024, 0)
     percent = downloaded / totalsize * 100
-    print(f"Downloaded {filename}: {downloaded} bytes / {totalsize} bytes ({percent:.2f}%)")
-    if downloaded == totalsize:
+    print(f"Downloaded {filename}: {downloaded} kb / {totalsize} kb ({percent:.2f}%)")
+    if downloaded >= totalsize:
         print(f"Download of {filename} completed.")
 
 
