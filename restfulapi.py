@@ -7,7 +7,6 @@
 """
 
 # -*- coding:utf-8 -*-
-from webbrowser import get
 from dotenv import load_dotenv
 import requests
 import json
@@ -68,7 +67,6 @@ def get_tokens(code):
 
     print("Token stored in session : ", session['oauth_token'])
     print("Refresh Token stored in session : ", session['refresh_token'])
-    return
 
 
 """
@@ -101,7 +99,6 @@ def get_tokens_refresh():
 
     print("Token stored in session : ", session['oauth_token'])
     print("Refresh Token stored in session : ", session['refresh_token'])
-    return
 
 
 """
