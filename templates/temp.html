@@ -40,7 +40,6 @@
           }
 
           function showRecrdings(apiUrl){
-              // 从输入框中获取值
               var start_date = document.getElementById("start_date").value;
               var end_date = document.getElementById("end_date").value;
               window.open("{{ url_for('recordings') }}?start_date="+ start_date +"&end_date="+end_date+"&apiUrl="+apiUrl) ;
