@@ -9,7 +9,7 @@ If you want direct download recording at the backend by python code , you can se
 your local path
 then run:
 
-*python3 oauth.py*
+*python3  restfulapi.py*
 
 You should see this in the terminal:
 
