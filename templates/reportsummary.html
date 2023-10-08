@@ -1,0 +1,39 @@
+{% extends "temp.html" %}
+
+{% block content %}
+    <div class="container">
+        <div style="text-align: left;margin: 30px">  <h1>Recording Audit Report Summaries List</h1></div>
+    <hr>
+        <table class="table table-striped table-bordered">
+            <thead>
+            <tr>
+                <th class="text-center">recordingId</th>
+                <th class="text-center">topic</th>
+                <th class="text-center">hostEmail</th>
+                <th class="text-center">viewCount</th>
+                <th class="text-center">downloadCount</th>
+                <th class="text-center">siteUrl</th>
+                <th class="text-center">timeRecorded</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for summary in summarys %}
+                <tr>
+                    <td><span><a href="javascript:showSummaryDetail('recordingReport/accessDetail', '{{ summary.recordingId }}');">{{ summary.recordingId }}</a></span></td>
+                    <td><span><a href="javascript:showSummaryDetail('recordingReport/accessDetail', '{{ summary.recordingId }}');">{{ summary.topic }}</a></span></td>
+                    <td><span>{{ summary.hostEmail }}</span></td>
+                    <td><span>{{ summary.viewCount }}</span></td>
+                    <td><span>{{ summary.downloadCount }}</span></td>
+                    <td><span>{{ summary.siteUrl }}</span></td>
+                    <td><span>{{ summary.timeRecorded }}</span></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+
+<style>
+
+</style>
