@@ -45,6 +45,16 @@
               window.open("{{ url_for('recordings') }}?start_date="+ start_date +"&end_date="+end_date+"&apiUrl="+apiUrl) ;
           }
 
+          function showSummarys(apiUrl){
+              var start_date = document.getElementById("start_date").value;
+              var end_date = document.getElementById("end_date").value;
+              window.open("{{ url_for('reportSummary') }}?start_date="+ start_date +"&end_date="+end_date+"&apiUrl="+apiUrl) ;
+          }
+
+          function showSummaryDetail(apiUrl, recordingId){
+              window.open("{{ url_for('reportSummaryDetail') }}?recordingId="+ recordingId + "&apiUrl="+apiUrl) ;
+          }
+
       </script>
   </head>
   <body>

@@ -235,6 +235,88 @@ def recordings():
     return render_template("recordings.html", recordings=recordings)
 
 
+@app.route("/report/summary", methods=['GET'])
+def reportSummary():
+    print("function : reportSummary()")
+
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    api_url = request.args.get("apiUrl")
+
+    print("start_date." + start_date)
+    print("end_date." + end_date)
+
+    max_num = os.getenv("RECORDING_NUM")
+    # api document: https://developer.webex.com/docs/api/v1/recordings, v1/admin/recordings api need admin or compliance officer role
+    url = baseApiUrl + api_url + "?max=" + max_num + "&from=" + start_date + "&to=" + end_date
+    r = []
+    # summarys = []
+
+    response = api_call_summary(url)
+
+    if isinstance(response, list):
+        r = response
+    else:
+        print("status code : ", response.status_code)
+        # Do a check on the response. If the access_token is invalid then use refresh
+        # tokent to ontain a new set of access token and refresh token.
+        if response.status_code == 401:
+            get_tokens_refresh()
+            response = api_call(url)
+
+        if response.status_code == 403:
+            print("403 forbidden to request")
+            errormsg = "403 forbidden to request:your account not have privilege to request this api"
+            return render_template("granted.html", errormsg=errormsg)
+        if 'errors' in response.json():
+            errormsg = response.json()['errors'][0]["description"]
+            print(errormsg)
+            return render_template("granted.html", errormsg=errormsg)
+        print("response status code : ", response.status_code)
+
+    return render_template("reportsummary.html", summarys=r)
+
+
+@app.route("/report/summary/detail", methods=['GET'])
+def reportSummaryDetail():
+    print("function : reportSummaryDetail()")
+
+    recording_id = request.args.get("recordingId")
+    api_url = request.args.get("apiUrl")
+
+    print("recording_id." + recording_id)
+
+    max_num = os.getenv("RECORDING_NUM")
+    # api document: https://developer.webex.com/docs/api/v1/recordings, v1/admin/recordings api need admin or compliance officer role
+    url = baseApiUrl + api_url + "?max=" + max_num + "&recordingId=" + recording_id
+    r = []
+    # summarys = []
+
+    response = api_call_summary(url)
+
+    if isinstance(response, list):
+        r = response
+    else:
+        print("status code : ", response.status_code)
+        # Do a check on the response. If the access_token is invalid then use refresh
+        # tokent to ontain a new set of access token and refresh token.
+        if response.status_code == 401:
+            get_tokens_refresh()
+            response = api_call(url)
+
+        if response.status_code == 403:
+            print("403 forbidden to request")
+            errormsg = "403 forbidden to request:your account not have privilege to request this api"
+            return render_template("granted.html", errormsg=errormsg)
+        if 'errors' in response.json():
+            errormsg = response.json()['errors'][0]["description"]
+            print(errormsg)
+            return render_template("granted.html", errormsg=errormsg)
+        print("response status code : ", response.status_code)
+
+    return render_template("reportsummarydetail.html", summarydetails=r)
+
+
 def callbackfunc(blocknum, blocksize, totalsize, filename):
     downloaded = round(blocknum * blocksize / 1024, 0)
     totalsize = round(totalsize / 1024, 0)
@@ -274,6 +356,19 @@ def api_call_recording(url, array=None):
 
         if next_link:
             api_call_recording(next_link, array)
+        return array
+    else:
+        return response
+
+
+def api_call_summary(url):
+    accessToken = session['oauth_token']
+
+    headers = {'accept': 'application/json', 'Content-Type': 'application/json',
+               'Authorization': 'Bearer ' + accessToken}
+    response = requests.get(url=url, headers=headers)
+    if response.status_code == 200:
+        array = response.json().get('items', [])
         return array
     else:
         return response
