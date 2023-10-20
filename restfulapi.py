@@ -15,6 +15,7 @@ import urllib.request
 
 
 from flask import Flask, render_template, request, session
+from flask_csv import send_csv
 
 load_dotenv()
 
@@ -242,17 +243,19 @@ def reportSummary():
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
     api_url = request.args.get("apiUrl")
+    res_type = request.args.get("res_type")
+    host_email = request.args.get("host_email")
 
     print("start_date." + start_date)
     print("end_date." + end_date)
 
     max_num = os.getenv("RECORDING_NUM")
     # api document: https://developer.webex.com/docs/api/v1/recordings, v1/admin/recordings api need admin or compliance officer role
-    url = baseApiUrl + api_url + "?max=" + max_num + "&from=" + start_date + "&to=" + end_date
+    url = baseApiUrl + api_url + "?max=" + max_num + "&from=" + start_date + "&to=" + end_date + "&hostEmail=" + host_email
     r = []
     # summarys = []
 
-    response = api_call_summary(url)
+    response = api_call_recording(url, r)
 
     if isinstance(response, list):
         r = response
@@ -274,7 +277,11 @@ def reportSummary():
             return render_template("granted.html", errormsg=errormsg)
         print("response status code : ", response.status_code)
 
-    return render_template("reportsummary.html", summarys=r)
+    if res_type == "list":
+        return render_template("reportsummary.html", summarys=r)
+    else:
+        if res_type == "csvDownload":
+            return downloadcsv(["recordingId", "topic", "hostEmail", "viewCount", "downloadCount", "siteUrl", "timeRecorded"], r, "RecordingAuditReportSummariesList_" + host_email+start_date+end_date+".csv")
 
 
 @app.route("/report/summary/detail", methods=['GET'])
@@ -283,6 +290,7 @@ def reportSummaryDetail():
 
     recording_id = request.args.get("recordingId")
     api_url = request.args.get("apiUrl")
+    res_type = request.args.get("res_type")
 
     print("recording_id." + recording_id)
 
@@ -292,7 +300,7 @@ def reportSummaryDetail():
     r = []
     # summarys = []
 
-    response = api_call_summary(url)
+    response = api_call_recording(url, r)
 
     if isinstance(response, list):
         r = response
@@ -314,8 +322,11 @@ def reportSummaryDetail():
             return render_template("granted.html", errormsg=errormsg)
         print("response status code : ", response.status_code)
 
-    return render_template("reportsummarydetail.html", summarydetails=r)
-
+    if res_type == "list":
+        return render_template("reportsummarydetail.html", summarydetails=r)
+    else:
+        if res_type == "csvDownload":
+            return downloadcsv(["recordingId", "topic", "name", "email", "accessTime", "downloaded", "viewed"], r, "RecordingAuditReportDetails_" + recording_id+".csv")
 
 def callbackfunc(blocknum, blocksize, totalsize, filename):
     downloaded = round(blocknum * blocksize / 1024, 0)
@@ -373,6 +384,8 @@ def api_call_summary(url):
     else:
         return response
 
+def downloadcsv(h, r, filename):
+    return send_csv(r, filename, h, cache_timeout=0)
 
 
 if __name__ == '__main__':
