@@ -45,11 +45,11 @@
               window.open("{{ url_for('recordings') }}?start_date="+ start_date +"&end_date="+end_date+"&apiUrl="+apiUrl) ;
           }
 
-          function showSummarys(apiUrl){
+          function showSummarys(apiUrl, isAdmin){
               var start_date = document.getElementById("start_date").value;
               var end_date = document.getElementById("end_date").value;
               var host_email = document.getElementById("host_email").value;
-              window.open("{{ url_for('reportSummary') }}?start_date="+ start_date +"&end_date="+end_date +"&host_email="+host_email+"&res_type=list"+"&apiUrl="+apiUrl) ;
+              window.open("{{ url_for('reportSummary') }}?start_date="+ start_date +"&end_date="+end_date +"&host_email="+host_email+"&isAdmin="+isAdmin+"&res_type=list"+"&apiUrl="+apiUrl) ;
           }
 
           function downloadSummarysCsv(apiUrl){

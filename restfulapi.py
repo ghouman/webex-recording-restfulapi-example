@@ -245,9 +245,13 @@ def reportSummary():
     api_url = request.args.get("apiUrl")
     res_type = request.args.get("res_type")
     host_email = request.args.get("host_email")
+    isAdmin = request.args.get("isAdmin")
 
     print("start_date." + start_date)
     print("end_date." + end_date)
+
+    if isAdmin == "true" and host_email == "":
+        host_email = "all"
 
     max_num = os.getenv("RECORDING_NUM")
     # api document: https://developer.webex.com/docs/api/v1/recordings, v1/admin/recordings api need admin or compliance officer role
