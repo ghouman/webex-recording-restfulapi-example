@@ -16,5 +16,114 @@
 
         <div  class='button' id="adminRecordings_btn" onclick="showRecrdings('admin/recordings')">List Recordings For an Admin or Compliance Officer</div>
     <div style="color: red;font-size: 10px">{{ errormsg }}</div>
+
+    <hr>
+
+    <h1>DELETE ALL CONVERGED RECORDINGS IN YOUR ORG BEFORE A CUTOFF DATE</h1>
+    <p style="color:#a00; font-size: 20px;">
+        ⚠ This permanently deletes every converged recording in your
+        organization (listed via <code>GET /v1/admin/convergedRecordings</code>,
+        which requires Admin orCompliance Officer role) that was created on or before
+        the cutoff date. The script lists in 30-day windows (the admin
+        endpoint requires the interval between <code>from</code> and
+        <code>to</code> to be within 30 days) and deletes each item until the
+        list is empty, then walks the window back one more month (up to
+        <code>months_back</code> windows).
+    </p>
+
+    <label for="cutoff_date">Cutoff Date:</label>
+    <input type="date" id="cutoff_date" name="cutoff_date" value="">
+
+    <label for="months_back">Months back:</label>
+    <input type="number" id="months_back" name="months_back" value="12" min="1" max="240" style="width:60px;">
+
+
+    <div class='button' id="bulk_purge_btn"
+         style="background:#a00; margin-left:10px;"
+         onclick="bulkPurgeConvergedRecordings()">
+         Bulk Delete All Converged Recordings Before Cutoff (Warning: it will permanently delete all converged recordings before the cutoff date)
+    </div>
+
+    <p style="color:#555; font-size:12px;">
+        The <b>bulk</b> button uses
+        <code>POST /v1/convergedRecordings/softDelete</code> and
+        <code>POST /v1/convergedRecordings/purge</code> — each call handles
+        up to 100 recordings at once, so it is dramatically faster than the
+        one-by-one DELETE. It first moves recordings to the recycle bin,
+        then immediately purges them from the recycle bin.
+    </p>
+
+    <script type="application/javascript">
+        function buildWaitPage(win, cutoff, months, title, subtitle){
+            win.document.write(
+                "<!doctype html><html><head><title>" + title + "</title>"
+                + "<style>"
+                + "body{font-family:system-ui,-apple-system,sans-serif;background:#fafafa;color:#222;"
+                + "max-width:720px;margin:60px auto;padding:0 24px;line-height:1.55;}"
+                + "h1{color:#a00;}"
+                + ".spinner{display:inline-block;width:18px;height:18px;border:3px solid #ccc;"
+                + "border-top-color:#a00;border-radius:50%;animation:spin 1s linear infinite;"
+                + "vertical-align:middle;margin-right:8px;}"
+                + "@keyframes spin{to{transform:rotate(360deg);}}"
+                + "code{background:#eee;padding:1px 4px;border-radius:3px;}"
+                + "</style></head><body>"
+                + "<h1><span class='spinner'></span>" + title + "</h1>"
+                + "<p>" + subtitle + "</p>"
+                + "<p>Cutoff date: <b>" + cutoff + "</b>, walking back <b>" + months + "</b> month(s).</p>"
+                + "<p><b>Please do not close this tab</b> — when the job "
+                + "finishes the page will automatically refresh to show a "
+                + "summary report (deleted / failed counts per window).</p>"
+                + "<p style='color:#888;font-size:13px;'>Started at <span id='t'></span>. "
+                + "Server-side progress is printed to the terminal running "
+                + "<code>restfulapi.py</code>.</p>"
+                + "<script>document.getElementById('t').textContent=new Date().toLocaleString();<\/script>"
+                + "</body></html>"
+            );
+            win.document.close();
+        }
+
+        function purgeConvergedRecordings(){
+            var cutoff = document.getElementById("cutoff_date").value;
+            var months = document.getElementById("months_back").value;
+            if (!cutoff) { alert("Please pick a cutoff date."); return; }
+            if (!confirm("This will PERMANENTLY DELETE every converged recording "
+                + "in your organization created on or before " + cutoff + " (walking back "
+                + months + " month(s)), ONE BY ONE. Continue?")) { return; }
+
+            var url = "{{ url_for('purge_converged_recordings') }}"
+                + "?cutoff_date=" + cutoff
+                + "&months_back=" + months;
+
+            var win = window.open("", "_blank");
+            if (!win) { alert("Popup blocked — please allow popups for this site."); return; }
+            buildWaitPage(win, cutoff, months,
+                "Purge in progress — please wait",
+                "Deleting every converged recording one by one. This can take "
+                + "<b>several minutes</b> depending on how many recordings exist.");
+            setTimeout(function(){ win.location.href = url; }, 150);
+        }
+
+        function bulkPurgeConvergedRecordings(){
+            var cutoff = document.getElementById("cutoff_date").value;
+            var months = document.getElementById("months_back").value;
+            if (!cutoff) { alert("Please pick a cutoff date."); return; }
+            if (!confirm("This will PERMANENTLY DELETE every converged recording "
+                + "in your organization created on or before " + cutoff + " (walking back "
+                + months + " month(s)) using the BULK softDelete + purge APIs (100 ids per call). Continue?")) { return; }
+
+            var url = "{{ url_for('bulk_purge_converged_recordings_route') }}"
+                + "?cutoff_date=" + cutoff
+                + "&months_back=" + months
+                + "&purge_after=true";
+
+            var win = window.open("", "_blank");
+            if (!win) { alert("Popup blocked — please allow popups for this site."); return; }
+            buildWaitPage(win, cutoff, months,
+                "Bulk purge in progress — please wait",
+                "Using <code>softDelete</code> + <code>purge</code> batch APIs "
+                + "(up to 100 recordings per call).");
+            setTimeout(function(){ win.location.href = url; }, 150);
+        }
+    </script>
 {#    <div class='center'><a href="{{ url_for('recordings',start_date='2023-03-20',end_date='2023-04-10')}}"><div class='button' style='width:512px;'>RECORDINGS</div></a></div>#}
 {% endblock %}
