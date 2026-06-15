@@ -12,9 +12,16 @@
         <label for="end_date">End Date:</label>
         <input type="date" id="end_date" name="end_date">
 
+        <label for="hostEmail">host email:</label>
+        <input type="text" id="host_email" name="host_email">
+
         <div  class='button' id="recordings_btn" onclick="showRecrdings('recordings')">List Recordings</div>
 
         <div  class='button' id="adminRecordings_btn" onclick="showRecrdings('admin/recordings')">List Recordings For an Admin or Compliance Officer</div>
+
+        <div  class='button' id="reportSummary_btn" onclick="showSummarys('recordingReport/accessSummary', false)">List of Recording Audit Report Summaries</div>
+
+    <div  class='button' id="reportSummary_btn" onclick="showSummarys('recordingReport/accessSummary', true)">List of Recording Audit Report Summaries for Admin</div>
     <div style="color: red;font-size: 10px">{{ errormsg }}</div>
 
     <hr>
