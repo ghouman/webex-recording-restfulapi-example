@@ -1,4 +1,4 @@
-"""                _
+r"""                _
   __      _____| |__   _____  __
   \ \ /\ / / _ \ '_ \ / _ \ \/ /
    \ V  V /  __/ |_) |  __/>  <         @WebexDevs
@@ -673,6 +673,122 @@ def bulk_purge_converged_recordings_route():
           f"total_failed={report['total_failed']}")
     return render_template("purge_result.html", report=report,
                            report_json=json.dumps(report, indent=2, default=str))
+
+
+def _csv_response(rows, headers, filename):
+    """Helper: turn a list of dicts into a downloadable CSV response."""
+    import csv, io
+    buf = io.StringIO()
+    writer = csv.DictWriter(buf, fieldnames=headers, extrasaction='ignore')
+    writer.writeheader()
+    for r in rows:
+        writer.writerow(r)
+    from flask import Response
+    return Response(
+        buf.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )
+
+
+@app.route("/reportSummary", methods=['GET'])
+def reportSummary():
+    """List Recording Audit Report Summaries via Webex recordingReport/accessSummary."""
+    print("function : reportSummary()")
+
+    start_date = request.args.get("start_date", "")
+    end_date = request.args.get("end_date", "")
+    host_email = request.args.get("host_email", "")
+    is_admin = (request.args.get("isAdmin", "false").lower() == "true")
+    res_type = request.args.get("res_type", "list")
+    api_url = request.args.get("apiUrl", "recordingReport/accessSummary")
+
+    max_num = os.getenv("RECORDING_NUM") or "100"
+    path = ("admin/" + api_url) if is_admin else api_url
+
+    params = []
+    if start_date:
+        params.append("from=" + start_date + "T00:00:00Z")
+    if end_date:
+        params.append("to=" + end_date + "T23:59:59Z")
+    if host_email:
+        params.append("hostEmail=" + host_email)
+    params.append("max=" + str(max_num))
+    url = baseApiUrl + path + ("?" + "&".join(params) if params else "")
+
+    response = api_call(url)
+    if response.status_code == 401:
+        get_tokens_refresh()
+        response = api_call(url)
+
+    if response.status_code == 403:
+        return render_template("granted.html",
+                               errormsg="403 forbidden: your account does not have privilege to call " + path)
+
+    try:
+        body = response.json()
+    except Exception:
+        return render_template("granted.html",
+                               errormsg=f"Unexpected response ({response.status_code}): {response.text[:300]}")
+
+    if 'errors' in body:
+        return render_template("granted.html", errormsg=body['errors'][0].get("description", str(body)))
+
+    summarys = body.get("items", [])
+
+    if res_type == "csvDownload":
+        return _csv_response(
+            summarys,
+            ["recordingId", "topic", "hostEmail", "viewCount", "downloadCount", "siteUrl", "timeRecorded"],
+            "recording_access_summary.csv",
+        )
+
+    return render_template("reportsummary.html", summarys=summarys)
+
+
+@app.route("/reportSummaryDetail", methods=['GET'])
+def reportSummaryDetail():
+    """List Recording Audit Report Details for a single recordingId."""
+    print("function : reportSummaryDetail()")
+
+    recording_id = request.args.get("recordingId", "")
+    res_type = request.args.get("res_type", "list")
+    api_url = request.args.get("apiUrl", "recordingReport/accessDetail")
+
+    if not recording_id:
+        return render_template("granted.html", errormsg="recordingId is required")
+
+    max_num = os.getenv("RECORDING_NUM") or "100"
+    url = baseApiUrl + api_url + "?recordingId=" + recording_id + "&max=" + str(max_num)
+
+    response = api_call(url)
+    if response.status_code == 401:
+        get_tokens_refresh()
+        response = api_call(url)
+
+    if response.status_code == 403:
+        return render_template("granted.html",
+                               errormsg="403 forbidden: your account does not have privilege to call " + api_url)
+
+    try:
+        body = response.json()
+    except Exception:
+        return render_template("granted.html",
+                               errormsg=f"Unexpected response ({response.status_code}): {response.text[:300]}")
+
+    if 'errors' in body:
+        return render_template("granted.html", errormsg=body['errors'][0].get("description", str(body)))
+
+    summarydetails = body.get("items", [])
+
+    if res_type == "csvDownload":
+        return _csv_response(
+            summarydetails,
+            ["recordingId", "topic", "name", "email", "accessTime", "downloaded", "viewed"],
+            "recording_access_detail.csv",
+        )
+
+    return render_template("reportsummarydetail.html", summarydetails=summarydetails)
 
 
 if __name__ == '__main__':
