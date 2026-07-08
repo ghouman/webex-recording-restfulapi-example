@@ -1,0 +1,65 @@
+{% extends "temp.html" %}
+
+{% block content %}
+<div class="container" style="text-align: left; margin: 30px;">
+    <h1>Purge Converged Recordings — Result</h1>
+
+    <p>
+        <strong>Cutoff date:</strong> {{ report.cutoff_date }} &nbsp;|&nbsp;
+        <strong>Months walked back:</strong> {{ report.months_back }} &nbsp;|&nbsp;
+        {% if report.mode %}<strong>Mode:</strong> {{ report.mode }} &nbsp;|&nbsp;{% endif %}
+        <strong>Total deleted:</strong>
+        <span style="color: green;">{{ report.total_deleted }}</span> &nbsp;|&nbsp;
+        <strong>Total failed:</strong>
+        <span style="color: red;">{{ report.total_failed }}</span>
+    </p>
+
+    <hr>
+
+    <table class="table table-striped table-bordered">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>From</th>
+            <th>To</th>
+            <th>List+Delete Iterations</th>
+            <th>Deleted</th>
+            <th>Failed</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for w in report.windows %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ w.from }}</td>
+                <td>{{ w.to }}</td>
+                <td>{{ w.iterations }}</td>
+                <td style="color: green;">{{ w.deleted }}</td>
+                <td style="color: red;">{{ w.failed }}</td>
+            </tr>
+            {% if w.failures %}
+                <tr>
+                    <td colspan="6">
+                        <details>
+                            <summary>{{ w.failures|length }} failure(s) in this window</summary>
+                            <pre style="white-space: pre-wrap;">{{ w.failures | tojson(indent=2) }}</pre>
+                        </details>
+                    </td>
+                </tr>
+            {% endif %}
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+    <details>
+        <summary>Full JSON report</summary>
+        <pre style="white-space: pre-wrap;">{{ report_json }}</pre>
+    </details>
+
+    <p style="margin-top: 20px;">
+        <a href="{{ url_for('main_page') }}">&laquo; Back to home</a>
+    </p>
+</div>
+{% endblock %}
+
